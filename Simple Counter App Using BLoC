@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Step 1: Define Events
+abstract class CounterEvent {}
+
+class IncrementEvent extends CounterEvent {}
+
+class DecrementEvent extends CounterEvent {}
+
+// Step 2: Define States
+abstract class CounterState {}
+
+class CounterInitialState extends CounterState {}
+
+class CounterUpdatedState extends CounterState {
+  final int count;
+  CounterUpdatedState(this.count);
+}
+
+// Step 3: Create the BLoC
+class CounterBloc extends Bloc<CounterEvent, CounterState> {
+  CounterBloc() : super(CounterInitialState());
+
+  int count = 0;
+
+  @override
+  Stream<CounterState> mapEventToState(CounterEvent event) async* {
+    if (event is IncrementEvent) {
+      count++;
+      yield CounterUpdatedState(count);
+    } else if (event is DecrementEvent) {
+      count--;
+      yield CounterUpdatedState(count);
+    }
+  }
+}
+
+// Step 4: Use BLoC in the UI
+class CounterApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => CounterBloc(),
+      child: Scaffold(
+        appBar: AppBar(title: Text('BLoC Counter')),
+        body: BlocBuilder<CounterBloc, CounterState>(
+          builder: (context, state) {
+            if (state is CounterUpdatedState) {
+              return Center(
+                child: Text('Count: ${state.count}'),
+              );
+            }
+            return Center(child: Text('Press the buttons!'));
+          },
+        ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              onPressed: () {
+                context.read<CounterBloc>().add(IncrementEvent());
+              },
+              child: Icon(Icons.add),
+            ),
+            SizedBox(height: 10),
+            FloatingActionButton(
+              onPressed: () {
+                context.read<CounterBloc>().add(DecrementEvent());
+              },
+              child: Icon(Icons.remove),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: CounterApp(),
+  ));
+}
